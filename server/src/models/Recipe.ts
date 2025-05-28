@@ -23,7 +23,11 @@ const RecipeSchema = new Schema<IRecipe>(
     instructions: { type: String, required: true },
     prepTime: { type: Number, required: true },
     cookTime: { type: Number, required: true },
-    servings: { type: Number, required: true },
+    servings: {
+      type: Number,
+      required: true,
+      min: [1, "Servings must be at least 1"],
+    },
     user: { type: Schema.Types.ObjectId, ref: "User", required: true },
     isPublic: { type: Boolean, default: false },
     tags: { type: [String], default: [] },
