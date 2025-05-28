@@ -1,9 +1,13 @@
-import { Request, Response, NextFunction } from "express";
+jest.mock("jsonwebtoken");
+
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { requireAuth } from "../../src/middlewares/requireAuth";
 
-jest.mock("jsonwebtoken");
-
+// clear all mocks
+afterAll(() => {
+  jest.resetModules();
+});
 describe("requireAuth middleware", () => {
   const mockRequest = (
     headers: Record<string, string | undefined>
