@@ -53,6 +53,40 @@ export const getPublicRecipes = async (
     handleError(res, error, "fetching public recipes");
   }
 };
+// Get a single recipe by slug
+export const getRecipeBySlug = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.split(" ")[1];
+        const decoded = verifyToken(token);
+        if (decoded) {
+          (req as any).user = decoded; // 👈 patch user on request
+        }
+      }
+    }
+    const recipe = await Recipe.findOne({ slug: req.params.slug });
+    if (!recipe) {
+      res.status(404).json({ message: "Recipe not found" });
+      return;
+    }
+
+    // Check if the recipe is public or belongs to the authenticated user
+    if (!recipe.isPublic && !isOwner(recipe, req)) {
+      {
+        res.status(403).json({ message: "Access denied" });
+        return;
+      }
+    }
+    res.status(200).json(recipe);
+  } catch (error) {
+    handleError(res, error, "fetching recipe by slug");
+  }
+};
 
 // Get a single recipe by ID
 export const getRecipeById = async (
