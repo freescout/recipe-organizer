@@ -13,6 +13,7 @@ export interface IRecipe extends Document {
   imageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
+  slug: string;
 }
 
 const RecipeSchema = new Schema<IRecipe>(
@@ -27,9 +28,19 @@ const RecipeSchema = new Schema<IRecipe>(
     isPublic: { type: Boolean, default: false },
     tags: { type: [String], default: [] },
     imageUrl: { type: String, default: "" },
+    slug: { type: String, required: true, unique: true },
   },
   { timestamps: true }
 );
+
+import { slugify } from "../utils/slugify";
+
+RecipeSchema.pre("validate", function (next) {
+  if (this.isModified("title")) {
+    this.slug = slugify(this.title);
+  }
+  next();
+});
 
 const Recipe = model<IRecipe>("Recipe", RecipeSchema);
 
