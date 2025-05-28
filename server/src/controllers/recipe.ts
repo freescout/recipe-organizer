@@ -3,6 +3,7 @@ import Recipe from "../models/Recipe";
 import { assertAuthenticated } from "../utils/assertAuthenticated";
 import { isOwner } from "../utils/ownership";
 import { handleError } from "../utils/handleError";
+import { verifyToken } from "../utils/jwt";
 
 // Create a new recipe
 export const createRecipe = async (
@@ -29,8 +30,17 @@ export const getMyRecipes = async (
   res: Response
 ): Promise<void> => {
   try {
+    const userId = req.user?.id;
+    const { ingredient } = req.query;
+    const query: any = { user: userId };
+
     assertAuthenticated(req);
-    const recipes = await Recipe.find({ user: req.user.id });
+
+    if (ingredient) {
+      query.ingredients = { $in: [ingredient] };
+    }
+
+    const recipes = await Recipe.find(query);
     res.status(200).json(recipes);
   } catch (error) {
     handleError(res, error, "fetching user recipes");
@@ -53,6 +63,7 @@ export const getPublicRecipes = async (
     handleError(res, error, "fetching public recipes");
   }
 };
+
 // Get a single recipe by slug
 export const getRecipeBySlug = async (
   req: Request,
@@ -95,6 +106,17 @@ export const getRecipeById = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
+
+    if (!req.user) {
+      const authHeader = req.headers.authorization;
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.split(" ")[1];
+        const decoded = verifyToken(token);
+        if (decoded) {
+          (req as any).user = decoded; // 👈 patch user on request
+        }
+      }
+    }
     const recipe = await Recipe.findById(id);
     if (!recipe) {
       res.status(404).json({ message: "Recipe not found" });
@@ -130,6 +152,13 @@ export const updateRecipe = async (
       res.status(403).json({ message: "Access denied" });
       return;
     }
+
+    const { servings } = req.body;
+    if (servings !== undefined && servings <= 0) {
+      res.status(400).json({ message: "Servings must be greater than zero" });
+      return;
+    }
+
     Object.assign(recipe, req.body);
     await recipe.save();
 
