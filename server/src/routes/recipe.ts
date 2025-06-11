@@ -7,6 +7,9 @@ import {
   getRecipeById,
   updateRecipe,
   getRecipeBySlug,
+  favoriteRecipe,
+  unfavoriteRecipe,
+  getFavoriteRecipes,
 } from "../controllers/recipe";
 import { requireAuth } from "../middlewares/requireAuth";
 
@@ -25,5 +28,9 @@ router.get("/", getMyRecipes);
 
 router.put("/:id", updateRecipe);
 router.delete("/:id", deleteRecipe);
+
+router.post("/:id/favorite", favoriteRecipe);
+router.delete(":id/favorite", unfavoriteRecipe);
+router.get("/favorites", getFavoriteRecipes);
 
 export default router;

@@ -1,9 +1,16 @@
 import { Request, Response } from "express";
+import mongoose from "mongoose";
 import Recipe from "../models/Recipe";
 import { assertAuthenticated } from "../utils/assertAuthenticated";
-import { isOwner } from "../utils/ownership";
+import {
+  getOwnedRecipeOrError,
+  getUserOrError,
+  isOwner,
+} from "../utils/ownership";
 import { handleError } from "../utils/handleError";
-import { verifyToken } from "../utils/jwt";
+import User from "../models/User";
+import { patchUserFromToken } from "../utils/patchUserFromToken";
+import { assertNotNull } from "../utils/assert";
 
 // Create a new recipe
 export const createRecipe = async (
@@ -53,7 +60,17 @@ export const getPublicRecipes = async (
   res: Response
 ): Promise<void> => {
   try {
-    const recipes = await Recipe.find({ isPublic: true });
+    const { ingredient, tag } = req.query;
+
+    const query: any = { isPublic: true };
+
+    if (ingredient) {
+      query.ingredients = { $regex: ingredient, $options: "i" };
+    }
+    if (tag) {
+      query.tags = tag;
+    }
+    const recipes = await Recipe.find(query);
     if (!recipes || recipes.length === 0) {
       res.status(404).json({ message: "No public recipes found" });
       return;
@@ -71,14 +88,7 @@ export const getRecipeBySlug = async (
 ): Promise<void> => {
   try {
     if (!req.user) {
-      const authHeader = req.headers.authorization;
-      if (authHeader?.startsWith("Bearer ")) {
-        const token = authHeader.split(" ")[1];
-        const decoded = verifyToken(token);
-        if (decoded) {
-          (req as any).user = decoded; // 👈 patch user on request
-        }
-      }
+      patchUserFromToken(req);
     }
     const recipe = await Recipe.findOne({ slug: req.params.slug });
     if (!recipe) {
@@ -105,21 +115,9 @@ export const getRecipeById = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { id } = req.params;
-
-    if (!req.user) {
-      const authHeader = req.headers.authorization;
-      if (authHeader?.startsWith("Bearer ")) {
-        const token = authHeader.split(" ")[1];
-        const decoded = verifyToken(token);
-        if (decoded) {
-          (req as any).user = decoded; // 👈 patch user on request
-        }
-      }
-    }
-    const recipe = await Recipe.findById(id);
-    if (!recipe) {
-      res.status(404).json({ message: "Recipe not found" });
+    const [recipe, error] = await getOwnedRecipeOrError(req, req.params.id);
+    if (error) {
+      res.status(error.status).json({ message: error.message });
       return;
     }
     // Check if the recipe is public or belongs to the authenticated user
@@ -140,16 +138,9 @@ export const updateRecipe = async (
   res: Response
 ): Promise<void> => {
   try {
-    assertAuthenticated(req);
-    const { id } = req.params;
-    const recipe = await Recipe.findById(id);
-    if (!recipe) {
-      res.status(404).json({ message: "Recipe not found" });
-      return;
-    }
-    // Check if the recipe belongs to the authenticated user
-    if (!isOwner(recipe, req)) {
-      res.status(403).json({ message: "Access denied" });
+    const [recipe, error] = await getOwnedRecipeOrError(req, req.params.id);
+    if (error) {
+      res.status(error.status).json({ message: error.message });
       return;
     }
 
@@ -174,21 +165,86 @@ export const deleteRecipe = async (
   res: Response
 ): Promise<void> => {
   try {
-    assertAuthenticated(req);
-    const { id } = req.params;
-    const recipe = await Recipe.findById(id);
-    if (!recipe) {
-      res.status(404).json({ message: "Recipe not found" });
-      return;
-    }
-    // Check if the recipe belongs to the authenticated user
-    if (!isOwner(recipe, req)) {
-      res.status(403).json({ message: "Access denied" });
+    const [recipe, error] = await getOwnedRecipeOrError(req, req.params.id);
+    if (error) {
+      res.status(error.status).json({ message: error.message });
       return;
     }
     await recipe.deleteOne();
     res.status(200).json({ message: "Recipe deleted successfully" });
   } catch (error) {
     handleError(res, error, "deleting recipe");
+  }
+};
+
+export const favoriteRecipe = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    assertAuthenticated(req);
+    const [user, error] = await getUserOrError(req.user?.id);
+    if (error) {
+      res.status(error.status).json({ message: error.message });
+      return;
+    }
+
+    assertNotNull(user, "User");
+    const { id } = req.params;
+
+    const recipeId = new mongoose.Types.ObjectId(id);
+
+    if (!user.favoriteRecipes.some((r) => r.equals(recipeId))) {
+      user.favoriteRecipes.push(recipeId);
+      await user.save();
+    }
+    res.status(200).json({ message: "Recipe added to favorites" });
+  } catch (error) {
+    handleError(res, error, "favoriting recipe");
+  }
+};
+
+export const unfavoriteRecipe = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    assertAuthenticated(req);
+
+    const [user, error] = await getUserOrError(req.user?.id);
+    const { id } = req.params;
+
+    if (error) {
+      res.status(error.status).json({ message: error.message });
+      return;
+    }
+
+    assertNotNull(user, "User");
+
+    user.favoriteRecipes = user.favoriteRecipes.filter(
+      (recipeId) => recipeId.toString() != id
+    );
+    await user.save();
+    res.status(200).json({ message: "Recipe removed from favorites" });
+  } catch (error) {
+    handleError(res, error, "unfavoring recipe");
+  }
+};
+
+export const getFavoriteRecipes = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    assertAuthenticated(req);
+    const userId = req.user?.id;
+    const user = await User.findById(userId).populate("favoriteRecipes");
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+    res.status(200).json(user?.favoriteRecipes);
+  } catch (error) {
+    handleError(res, error, "fetching favorite recipes");
   }
 };
