@@ -12,25 +12,6 @@
 
 /**
  * @openapi
- * /api/recipes/{id}:
- *   get:
- *     summary: Get a recipe by ID
- *     tags:
- *       - Recipes
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: Recipe ID
- *     responses:
- *       200:
- *         description: Recipe found
- */
-
-/**
- * @openapi
  * /api/recipes/slug/{slug}:
  *   get:
  *     summary: Get a recipe by slug
@@ -128,4 +109,60 @@
  *     responses:
  *       204:
  *         description: Recipe deleted
+ */
+
+/**
+ * @openapi
+ * /api/recipes/favorites:
+ *   get:
+ *     summary: Get favorite recipes of the authenticated user
+ *     tags:
+ *       - Recipes
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of favorite recipes
+ */
+
+/**
+ * @openapi
+ * /api/recipes/{id}/favorite:
+ *   post:
+ *     summary: Add a recipe to the user's favorites
+ *     tags:
+ *       - Recipes
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the recipe to favorite
+ *     responses:
+ *       200:
+ *         description: Recipe favorited
+ */
+
+/**
+ * @openapi
+ * /api/recipes/{id}/favorite:
+ *   delete:
+ *     summary: Remove a recipe from the user's favorites
+ *     tags:
+ *       - Recipes
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the recipe to unfavorite
+ *     responses:
+ *       200:
+ *         description: Recipe unfavorited
  */
