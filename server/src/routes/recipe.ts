@@ -4,7 +4,6 @@ import {
   deleteRecipe,
   getMyRecipes,
   getPublicRecipes,
-  getRecipeById,
   updateRecipe,
   getRecipeBySlug,
   favoriteRecipe,
@@ -15,22 +14,21 @@ import { requireAuth } from "../middlewares/requireAuth";
 
 const router = express.Router();
 
-// Public route
+// Public routes
 router.get("/public", getPublicRecipes);
-router.get("/:id", getRecipeById);
 router.get("/slug/:slug", getRecipeBySlug);
 
-// Protected routes
-router.use(requireAuth); // All routes below require a valid JWT
+// Protected routes (require JWT)
+router.use(requireAuth);
 
-router.post("/", createRecipe);
-router.get("/", getMyRecipes);
+router.get("/favorites", getFavoriteRecipes);
+router.post("/:id/favorite", favoriteRecipe);
+router.delete("/:id/favorite", unfavoriteRecipe);
 
 router.put("/:id", updateRecipe);
 router.delete("/:id", deleteRecipe);
 
-router.post("/:id/favorite", favoriteRecipe);
-router.delete(":id/favorite", unfavoriteRecipe);
-router.get("/favorites", getFavoriteRecipes);
+router.get("/", getMyRecipes);
+router.post("/", createRecipe);
 
 export default router;

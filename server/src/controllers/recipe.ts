@@ -109,29 +109,6 @@ export const getRecipeBySlug = async (
   }
 };
 
-// Get a single recipe by ID
-export const getRecipeById = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const [recipe, error] = await getOwnedRecipeOrError(req, req.params.id);
-    if (error) {
-      res.status(error.status).json({ message: error.message });
-      return;
-    }
-    // Check if the recipe is public or belongs to the authenticated user
-    if (!recipe.isPublic && !isOwner(recipe, req)) {
-      res.status(403).json({ message: "Access denied" });
-      return;
-    }
-    // If the recipe is public or belongs to the user, return it
-    res.status(200).json(recipe);
-  } catch (error) {
-    handleError(res, error, "fetching recipe");
-  }
-};
-
 // Update an existing recipe
 export const updateRecipe = async (
   req: Request,
