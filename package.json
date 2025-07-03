@@ -11,5 +11,10 @@
   },
   "scripts": {
     "dev": "concurrently \"yarn workspace recipe-organizer-client dev\" \"yarn workspace recipe-organizer-server dev\""
-  }
+  },
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/freescout/recipe-organizer.git",
+  "author": "Neethu <neethu.jacob@shadline.com>",
+  "license": "MIT"
 }
