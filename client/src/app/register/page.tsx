@@ -1,12 +1,10 @@
-// src/app/login/page.tsx
-
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+//import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
+  //const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
