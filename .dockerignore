@@ -1,0 +1,27 @@
+# Root-level
+.next
+node_modules
+dist
+storybook-static
+*.log
+*.env
+*.local
+
+# Client-specific
+client/.next
+client/node_modules
+client/out
+client/.storybook  # optional: ignore if you don't want Storybook files copied
+client/.env
+client/.env.local
+
+# Server-specific
+server/dist
+server/node_modules
+server/.env
+server/.env.local
+
+# Misc
+**/__tests__/
+**/*.test.*
+coverage
