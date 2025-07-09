@@ -4,10 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "cross-env NEXT_PRIVATE_DEV_SERVER=legacy next dev",
-    "build": "next build",
+    "build": "cross-env SKIP_VITEST_PLUGIN=true next build",
     "start": "next start",
     "lint": "next lint",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "start-storybook -p 6006 --config-dir .storybook",
     "build-storybook": "storybook build"
   },
   "dependencies": {
