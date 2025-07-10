@@ -36,4 +36,10 @@ jobs:
         run: yarn install
 
       - name: Run tests
-        run: yarn test
+        run: |
+          echo "TEST_DB_URI=$TEST_DB_URI"
+          echo "JWT_SECRET=$JWT_SECRET"
+          yarn test
+        env:
+          TEST_DB_URI: ${{ env.TEST_DB_URI }}
+          JWT_SECRET: ${{ env.JWT_SECRET }}
