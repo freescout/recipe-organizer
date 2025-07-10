@@ -11,6 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["jest"]
   },
-  "include": ["src", "jest.setup.ts"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
