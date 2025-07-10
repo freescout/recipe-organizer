@@ -1,10 +1,15 @@
 {
   "name": "recipe-organizer",
   "private": true,
-  "workspaces": [
-    "server",
-    "client"
-  ],
+  "workspaces": {
+    "packages": [
+      "server",
+      "client"
+    ],
+    "nohoist": [
+      "**/@types/jest"
+    ]
+  },
   "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72",
   "devDependencies": {
     "concurrently": "^9.1.2"

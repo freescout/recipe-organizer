@@ -9,8 +9,8 @@
     "rootDir": "./src",
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    "types": ["jest"]
   },
-  "include": ["src"],
+  "include": ["src", "jest.setup.ts"],
   "exclude": ["node_modules", "dist"]
 }
