@@ -1,40 +1,43 @@
 import Image from "next/image";
 import RecipeMeta from "../RecipeMeta";
 import FavoriteButton from "../FavoriteButton";
+import { Recipe } from "@/types";
+import { useState } from "react";
 
 type RecipeCardProps = {
-  title: string;
-  imageUrl?: string;
-  prepTime: number;
-  cookTime: number;
-  servings: number;
-  tags?: string[];
+  recipe: Recipe;
 };
 
-export default function RecipeCard({
-  title,
-  imageUrl,
-  prepTime,
-  cookTime,
-  servings,
-  tags,
-}: RecipeCardProps) {
+export default function RecipeCard({ recipe }: RecipeCardProps) {
+  const {
+    title,
+    imageUrl,
+    prepTime = 0,
+    cookTime = 0,
+    servings = 1,
+    tags = [],
+  } = recipe;
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="relative w-full h-48">
+      <div className="relative w-full aspect-square">
         {imageUrl && (
           <Image
-            src={imageUrl}
+            src={imgError ? "/images/placeholder.jpg" : imageUrl}
             alt={title}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 400px"
             priority={false}
+            onError={() => setImgError(true)}
           />
         )}
       </div>
       <div className="p-4">
-        <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
+        <h2 className="text-xl font-semibold text-center uppercase text-gray-800">
+          {title}
+        </h2>
         <FavoriteButton initialIsFavorited={false} />
         <RecipeMeta
           prepTime={prepTime}
