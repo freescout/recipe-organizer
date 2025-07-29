@@ -4,7 +4,8 @@ import app from "./app";
 
 dotenv.config();
 
-const PORT = process.env.PORT || 7000;
+const PORT = parseInt(process.env.PORT || "7000", 10);
+
 const MONGO_URI =
   process.env.MONGO_URI ||
   process.env.TEST_DB_URI ||
@@ -15,8 +16,12 @@ if (process.env.NODE_ENV !== "test") {
   mongoose
     .connect(MONGO_URI, {})
     .then(() => {
-      console.log("Connected to MongoDB");
-      app.listen(PORT, () => {
+      console.log(
+        "Connecting to:",
+        MONGO_URI.includes("mongodb+srv") ? "MongoDB Atlas" : "Local Mongo"
+      );
+
+      app.listen(PORT, "0.0.0.0", () => {
         console.log(`Server is running on http://localhost:${PORT}`);
       });
     })
