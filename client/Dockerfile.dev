@@ -1,0 +1,17 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Step 1: Copy root workspace files
+COPY package.json yarn.lock ./
+COPY client/package.json ./client/package.json
+
+# Step 2: Install all dependencies from root
+RUN yarn install
+
+# Step 3: Copy the full monorepo (or just client + workspaces)
+COPY . .
+
+# Step 4: Set working dir to client and run dev
+WORKDIR /app/client
+CMD ["yarn", "dev"]
