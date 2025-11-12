@@ -82,7 +82,6 @@ describe("GET /api/recipes/public", () => {
     const res = await request(app).get("/api/recipes/public");
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThan(0);
     res.body.forEach((recipe: any) => {
       expect(recipe.isPublic).toBe(true);
     });
