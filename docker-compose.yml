@@ -32,5 +32,19 @@ services:
     networks:
       - app-network
 
+  mongo:
+    image: mongo:6
+    container_name: recipe-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
 networks:
   app-network:
+
+volumes:
+  mongo-data:
