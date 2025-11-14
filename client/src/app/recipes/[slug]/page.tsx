@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-type Props = {
+export default async function RecipeDetailPage({
+  params,
+}: {
   params: { slug: string };
-};
-
-export default async function RecipeDetailPage({ params }: Props) {
+}) {
   const recipe = await getRecipeBySlug(params.slug);
   if (!recipe) return notFound();
 
@@ -17,7 +17,7 @@ export default async function RecipeDetailPage({ params }: Props) {
       <h1 className="text-4xl font-bold text-center uppercase mb-2">
         {recipe.title}
       </h1>
-      {/* Info grid */}
+
       <div className="grid grid-cols-2 md:grid-cols-4 text-center border-y py-4 mb-6">
         <div>
           <div className="text-sm text-gray-500 uppercase">Serves</div>
@@ -38,6 +38,7 @@ export default async function RecipeDetailPage({ params }: Props) {
           </div>
         </div>
       </div>
+
       <div className="relative w-full aspect-video mb-6 rounded-xl overflow-hidden">
         <Image
           src={recipe.imageUrl || "/images/placeholder.jpg"}
@@ -48,7 +49,6 @@ export default async function RecipeDetailPage({ params }: Props) {
         />
       </div>
 
-      {/* Ingredients */}
       <h2 className="text-2xl font-bold mb-3">Ingredients</h2>
       <ul className="list-disc list-inside mb-6 text-gray-800 leading-relaxed">
         {recipe.ingredients.map((item: string) => (
@@ -56,7 +56,6 @@ export default async function RecipeDetailPage({ params }: Props) {
         ))}
       </ul>
 
-      {/* Instructions */}
       <h2 className="text-2xl font-bold mb-3">Instructions</h2>
       <p className="text-gray-800 whitespace-pre-line">{recipe.instructions}</p>
     </div>
