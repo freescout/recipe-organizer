@@ -2,6 +2,8 @@ import { getRecipeBySlug } from "@/lib/api";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 type Props = {
   params: { slug: string };
 };
