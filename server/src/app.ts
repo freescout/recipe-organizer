@@ -11,7 +11,12 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:3001", // frontend dev server
+    origin: [
+      "http://localhost:3001", // frontend dev server
+      "https://recipe-organizer-client.vercel.app",
+      "https://recipe-organizer-client-git-main-freescouts-projects.vercel.app",
+      "https://recipe-organizer.onrender.com",
+    ],
     credentials: true,
   })
 );
