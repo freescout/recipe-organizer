@@ -1,15 +1,52 @@
 # 🍽️ Recipe Organizer
 
-A full-stack app to manage, search, and plan recipes — built with Node.js, TypeScript, MongoDB, JWT Auth, and (soon) React/Next.js.
+A full-stack monorepo app to manage, search, and plan recipes — built with Node.js, TypeScript, MongoDB, JWT Auth, and React/Next.js.
+The project uses Yarn Workspaces and Docker Compose for easy local and production setup.
+
+## 📋 Prerequisites
+
+- Node.js 18+ and Yarn
+- Docker & Docker Compose (for containerized setup)
+- Git
 
 ## 📦 Tech Stack
 
 - **Backend**: Node.js, Express, TypeScript
+- **Frontend**: Next.js + React
 - **Database**: MongoDB (Mongoose)
 - **Auth**: JWT, bcrypt
-- **API**: REST + OpenAPI (upcoming)
-- **Frontend**: [planned] Next.js + React
-- **Other**: Redis, RabbitMQ (upcoming), Docker
+- **API**: REST + OpenAPI
+- **DevOps**: Docker, Docker Compose
+- **Other**: Redis, RabbitMQ (upcoming)
+
+## 🗂️ Monorepo Structure
+
+```bash
+server/        # Node.js + Express + TypeScript backend
+├── controllers/
+├── models/
+├── routes/
+├── services/
+├── utils/
+├── middlewares/
+└── index.ts
+
+client/        # Next.js + React frontend
+├── app/
+├── components/
+├── pages/
+└── package.json
+
+```
+
+Root:
+
+```bash
+├── docker-compose.yml
+├── package.json            # yarn workspaces config
+├── .env                    # shared environment vars
+└── README.md
+```
 
 ## ✅ Features (MVP)
 
@@ -23,29 +60,104 @@ A full-stack app to manage, search, and plan recipes — built with Node.js, Typ
 
 ## 🚀 Getting Started
 
+### 1. Clone and Install
+
+Run this once at the root:
+
 ```bash
-cd server
+git clone https://github.com/freescout/recipe-organizer.git
+cd recipe-organizer
 yarn install
-cp .env.example .env # Add your MongoDB URI and JWT secret
+```
+
+💡 This automatically installs and links dependencies for both the
+server and client workspaces
+
+### 2. Choose your Development Mode
+
+### Option A : Docker Compose (Recommended)
+
+Easiest setup - handles MongoDB, server, and client all at once
+
+```bash
+# Copy example env file
+cp server/.env.example server/.env
+
+# Start all services
+docker compose up --build
+# Add your MongoDB URI and JWT secret
+```
+
+This will start:
+
+- Server: http://localhost:7000
+
+- Client: http://localhost:3000
+
+- MongoDB: localhost:27017 (with persistent volume)
+
+Your server/.env should look like:
+
+```env
+MONGODB_URI=mongodb://mongo:27017/recipe-organizer
+JWT_SECRET=your-super-secret-key-change-this-in-production
+PORT=7000
+NODE_ENV=development
+```
+
+### Option B - Local development (without Docker)
+
+Better for development - faster hot reload and easier debugging.
+
+Step 1: Install and start MongoDB locally
+
+```bash
+# macOS (via Homebrew)
+brew install mongodb-community
+brew services start mongodb-community
+
+# Ubuntu
+sudo apt install mongodb
+sudo systemctl start mongod
+
+# Or use MongoDB Atlas (cloud)
+```
+
+Step 2: Configure environment
+
+```bash
+cp server/.env.example server/.env
+```
+
+Edit server/.env
+
+```env
+MONGODB_URI=mongodb://localhost:27017/recipe-organizer
+JWT_SECRET=your-super-secret-key-change-this
+PORT=7000
+NODE_ENV=development
+```
+
+Step 3: Start both workspaces
+
+```bash
+# Start both server and client concurrently
 yarn dev
+
+# Or run them separately in different terminals:
+yarn workspace recipe-organizer-server dev
+yarn workspace recipe-organizer-client dev
 ```
 
-## 📁 Folder Structure
+3. Verify Setup
 
-```pgsql
-server/
-├── controllers/
-├── models/
-├── routes/
-├── services/
-├── utils/
-├── middlewares/
-└── index.ts
-```
+- Client: http://localhost:3000 (local) or http://localhost:3001 (Docker)
+- Server: http://localhost:7000/api
+- API Docs: http://localhost:7000/api/docs (if OpenAPI/Swagger is configured)
 
 ## 🧪 Tests
 
-The backend is tested using **Jest** with both **unit** and **integration** coverage:
+The backend uses **Jest** for both **unit** and **integration** tests:
 
 - ✅ **Unit tests** for utilities like `jwt` (token handling) and `slugify`, with comprehensive edge case handling
 - ✅ **Middleware tests** for `requireAuth` (JWT verification and route protection)
@@ -53,19 +165,21 @@ The backend is tested using **Jest** with both **unit** and **integration** cove
 
 ```bash
 # Run all tests
-yarn test
+yarn workspace recipe-organizer-server test
+
 ```
 
 ## 🔧 Dev Scripts
 
-To help test your API quickly:
+Quick helper scripts for backend testing or seeding:
 
 ```bash
 # Seed a test user
-yarn ts-node scripts/seed-user.ts
+yarn workspace recipe-organizer-server ts-node scripts/seed-user.ts
 
-# Generate a JWT token for curl testing
-yarn ts-node scripts/print-token.ts
+# Generate a JWT for curl testing
+yarn workspace recipe-organizer-server ts-node scripts/print-token.ts
+
 ```
 
 ---
@@ -74,22 +188,23 @@ yarn ts-node scripts/print-token.ts
 
 ✅ Prerequisites
 
-1. Run your `scripts/seed-user.ts` script:
-
-```js
-yarn ts-node scripts/seed-user.ts  // USER ID: 684c475048c20d02be2eea6a
-```
-
-2. Then run your `scripts/print-token.ts` script:
-
-```js
-yarn ts-node scripts/print-token.ts
-```
-
-3. Store the token in a shell variable
+1. Create a user and get its ID
 
 ```bash
-export TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+yarn workspace recipe-organizer-server ts-node scripts/seed-user.ts  // USER ID: 684c475048c20d02be2eea6a
+```
+
+2. Generate JWT token
+
+```js
+yarn workspace recipe-organizer-server ts-node scripts/print-token.ts
+```
+
+3. Store credentials in shell variables
+
+```bash
+export TOKEN="<your-jwt-token>"
+export USER_ID="<user_id from script>"
 ```
 
 ### 🔍 Test Routes with `curl`
@@ -104,13 +219,13 @@ curl http://localhost:7000/api/recipes/slug/avocado-toast
 
 ```
 
-2. 🔐 Protected route: Get user profile or favorites
+### 2. 🔐 Protected route: Get user profile or favorites
 
 ```bash
 curl -H "Authorization: Bearer $TOKEN" http://localhost:7000/api/recipes/favorites
 ```
 
-3. ➕ Create a new recipe (POST)
+### 3. ➕ Create a new recipe (POST)
 
 ```bash
 curl -X POST http://localhost:7000/api/recipes \
@@ -128,18 +243,18 @@ curl -X POST http://localhost:7000/api/recipes \
 
 ```
 
-4. ❤️ Add/remove favorite
+### 4. ❤️ Add/remove favorite
 
 ```bash
-curl -X POST http://localhost:7000/api/recipes/684c475048c20d02be2eea6a/favorite \
+curl -X POST http://localhost:7000/api/recipes/$USER_ID/favorite \
   -H "Authorization: Bearer $TOKEN"
 
-curl -X DELETE http://localhost:7000/api/recipes/684c475048c20d02be2eea6a/favorite \
+curl -X DELETE http://localhost:7000/api/recipes/$USER_ID/favorite \
   -H "Authorization: Bearer $TOKEN"
 
 ```
 
-5. 🔄 Update recipe (PUT)
+### 5. 🔄 Update recipe (PUT)
 
 ```bash
 curl -X PUT http://localhost:7000/api/recipes/68502e9413d75028b2311213 \
@@ -148,26 +263,33 @@ curl -X PUT http://localhost:7000/api/recipes/68502e9413d75028b2311213 \
   -d '{"title": "Turkish Rice"}'
 ```
 
-6. 🗑️ Delete recipe
+### 6. 🗑️ Delete recipe
 
 ```bash
 curl -X DELETE http://localhost:7000/api/recipes/68502e9413d75028b2311213 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
+## 🌐 Live Demo
+
+The application is deployed and running at:
+
+- Client: https://recipe-organizer-client.vercel.app
+- API: https://recipe-organizer-server.onrender.com/api
+
 ## 📌 Roadmap
 
-Recipe CRUD
+- [x] User authentication (JWT + bcrypt)
+- [x] Recipe CRUD
+- [x] Production deployment
+- [ ] Image uploads (Cloudinary)
+- [ ] Meal planner + grocery list
+- [ ] Redis cache for search
+- [ ] Background jobs (RabbitMQ)
+- [ ] CI/CD (GitHub Actions)
 
-Image uploads (Cloudinary)
-
-Meal planner + grocery list
-
-Redis cache for search
-
-Background job (RabbitMQ)
-
-CI/CD (GitHub Actions)
+📄 License
+MIT
 
 ## 🧑‍💻 Author
 
