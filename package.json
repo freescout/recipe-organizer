@@ -21,9 +21,5 @@
   "main": "index.js",
   "repository": "https://github.com/freescout/recipe-organizer.git",
   "author": "Neethu <neethu.jacob@shadline.com>",
-  "license": "MIT",
-  "dependencies": {
-    "eslint-config-next": "15.3.6",
-    "next": "15.3.6"
-  }
+  "license": "MIT"
 }
