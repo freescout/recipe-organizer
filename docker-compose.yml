@@ -14,8 +14,6 @@ services:
     build:
       context: .
       dockerfile: client/Dockerfile.dev
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost:7000/api
     ports:
       - "3001:3000"
     volumes:
@@ -24,27 +22,13 @@ services:
     working_dir: /app/client
     command: yarn dev
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:7000/api
       NODE_ENV: development
-
+      NEXT_PUBLIC_API_URL: http://localhost:7000/api
+      API_INTERNAL_URL: http://server:7000/api
     depends_on:
       - server
     networks:
       - app-network
 
-  mongo:
-    image: mongo:6
-    container_name: recipe-mongo
-    restart: always
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    networks:
-      - app-network
-
 networks:
   app-network:
-
-volumes:
-  mongo-data:
