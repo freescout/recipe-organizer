@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL =
+  process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL;
 const API_INTERNAL = process.env.API_INTERNAL_URL;
 
 export const api = axios.create({
@@ -23,7 +24,9 @@ export const getRecipeBySlug = async (slug: string) => {
     const res = await fetch(`${API_INTERNAL}/recipes/slug/${slug}`, {
       cache: "no-store",
     });
-    if (!res.ok) throw new Error("Recipe not found");
+    if (!res.ok) {
+      return null;
+    }
     const data = await res.json();
     console.log("Fetched single recipe", data);
     return data;
