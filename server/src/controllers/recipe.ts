@@ -87,22 +87,29 @@ export const getRecipeBySlug = async (
   res: Response
 ): Promise<void> => {
   try {
-    if (!req.user) {
-      patchUserFromToken(req);
-    }
     const recipe = await Recipe.findOne({ slug: req.params.slug });
+
     if (!recipe) {
       res.status(404).json({ message: "Recipe not found" });
       return;
     }
 
-    // Check if the recipe is public or belongs to the authenticated user
-    if (!recipe.isPublic && !isOwner(recipe, req)) {
-      {
+    // Public recipe → always accessible
+    if (recipe.isPublic) {
+      res.status(200).json(recipe);
+      return;
+    }
+
+    // Private recipe → requires auth
+    if (!req.user) {
+      patchUserFromToken(req);
+    }
+
+    if (!req.user || !isOwner(recipe, req)) {
         res.status(403).json({ message: "Access denied" });
         return;
       }
-    }
+
     res.status(200).json(recipe);
   } catch (error) {
     handleError(res, error, "fetching recipe by slug");
