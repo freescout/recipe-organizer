@@ -1,0 +1,12 @@
+services:
+  mongo-test:
+    image: mongo:7
+    container_name: recipe-mongo-test
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-test-data:/data/db
+    command: ["mongod", "--quiet"]
+
+volumes:
+  mongo-test-data:

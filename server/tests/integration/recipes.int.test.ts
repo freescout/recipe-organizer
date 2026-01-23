@@ -33,7 +33,6 @@ const authDelete = (url: string, token: string) =>
   request(app).delete(url).set("Authorization", `Bearer ${token}`);
 
 beforeAll(async () => {
-  await mongoose.connect(process.env.TEST_DB_URI!);
   await Recipe.deleteMany({});
   await User.deleteMany({});
 
@@ -70,11 +69,6 @@ beforeAll(async () => {
     slug: "secret-lamb-curry",
   });
   privateRecipeId = (privateRecipe._id as mongoose.Types.ObjectId).toString();
-});
-
-afterAll(async () => {
-  await mongoose.connection.dropDatabase();
-  await mongoose.disconnect();
 });
 
 describe("GET /api/recipes/public", () => {
@@ -120,6 +114,45 @@ describe("POST /api/recipes", () => {
     expect(res.body.user).toBe(owner.id);
   });
 
+  it("should auto-generate slug from title", async () => {
+    const res = await authPost("/api/recipes", ownerToken, {
+      title: "Grilled Chicken",
+      ingredients: ["x"],
+      instructions: "test",
+      prepTime: 1,
+      cookTime: 1,
+      servings: 1,
+    });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body.slug).toMatch(/^grilled-chicken(-\d+)?$/);
+  });
+
+  it("should reject empty ingredients array", async () => {
+    const res = await authPost("/api/recipes", ownerToken, {
+      title: "Bad recipe",
+      ingredients: [],
+      instructions: "test",
+      prepTime: 1,
+      cookTime: 1,
+      servings: 1,
+    });
+    expect([400, 422]).toContain(res.statusCode);
+  });
+
+  it("should fail if required field is missing", async () => {
+    const res = await authPost("/api/recipes", ownerToken, {
+      // title missing
+      ingredients: ["x"],
+      instructions: "test",
+      prepTime: 1,
+      cookTime: 1,
+      servings: 1,
+    });
+
+    expect([400, 422]).toContain(res.statusCode);
+  });
+
   it("should return 401 without token", async () => {
     const res = await request(app)
       .post("/api/recipes")
@@ -162,7 +195,7 @@ describe("GET /api/recipes/slug/:slug", () => {
   it("should allow owner to access private recipe", async () => {
     const res = await authGet(
       "/api/recipes/slug/secret-lamb-curry",
-      ownerToken
+      ownerToken,
     );
     expect(res.statusCode).toBe(200);
   });
@@ -170,7 +203,7 @@ describe("GET /api/recipes/slug/:slug", () => {
   it("should deny access to stranger", async () => {
     const res = await authGet(
       "/api/recipes/slug/secret-lamb-curry",
-      strangerToken
+      strangerToken,
     );
     expect([403, 404]).toContain(res.statusCode);
   });
@@ -194,7 +227,7 @@ describe("PUT /api/recipes/:id", () => {
     const res = await authPut(
       `/api/recipes/${privateRecipeId}`,
       strangerToken,
-      { title: "Hack" }
+      { title: "Hack" },
     );
     expect([403, 404]).toContain(res.statusCode);
   });
@@ -247,7 +280,7 @@ describe("DELETE /api/recipes/:id", () => {
   it("should deny delete by stranger", async () => {
     const res = await authDelete(
       `/api/recipes/${publicRecipeId}`,
-      strangerToken
+      strangerToken,
     );
     expect([403, 404]).toContain(res.statusCode);
   });
@@ -261,14 +294,13 @@ describe("Favorite Recipes", () => {
   });
 
   it("should add recipe to favorites", async () => {
-    console.log("favId = ", favId);
     expect(favId).toBeDefined();
     expect(mongoose.Types.ObjectId.isValid(favId)).toBe(true);
 
     const res = await authPost(
       `/api/recipes/${favId}/favorite`,
       ownerToken,
-      {}
+      {},
     );
     //expect(res.statusCode).toBe(200);
   });
