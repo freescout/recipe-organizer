@@ -46,7 +46,7 @@ beforeAll(async () => {
 
   const publicRecipe = await Recipe.create({
     title: "Grilled Chicken",
-    ingredients: ["chicken", "garlic", "lemon"],
+    ingredients: [{ item: "chicken" }, { item: "garlic" }, { item: "lemon" }],
     instructions: "Grill it.",
     prepTime: 10,
     cookTime: 20,
@@ -59,7 +59,7 @@ beforeAll(async () => {
 
   const privateRecipe = await Recipe.create({
     title: "Secret Lamb Curry",
-    ingredients: ["lamb", "spices"],
+    ingredients: [{ item: "lamb" }, { item: "spices" }],
     instructions: "Cook slowly",
     prepTime: 20,
     cookTime: 60,
@@ -101,7 +101,7 @@ describe("POST /api/recipes", () => {
   it("should create a recipe", async () => {
     const res = await authPost("/api/recipes", ownerToken, {
       title: "Lemon Fish Curry",
-      ingredients: ["fish", "lemon"],
+      ingredients: [{ item: "fish" }, { item: "lemon" }],
       instructions: "Cook it.",
       prepTime: 10,
       cookTime: 15,
@@ -110,14 +110,14 @@ describe("POST /api/recipes", () => {
     });
     expect(res.statusCode).toBe(201);
     expect(res.body.title).toBe("Lemon Fish Curry");
-    expect(res.body.ingredients).toContain("fish");
+    expect(res.body.ingredients.some((i: any) => i.item === "fish")).toBe(true);
     expect(res.body.user).toBe(owner.id);
   });
 
   it("should auto-generate slug from title", async () => {
     const res = await authPost("/api/recipes", ownerToken, {
       title: "Grilled Chicken",
-      ingredients: ["x"],
+      ingredients: [{ item: "x" }],
       instructions: "test",
       prepTime: 1,
       cookTime: 1,
@@ -126,6 +126,36 @@ describe("POST /api/recipes", () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.body.slug).toMatch(/^grilled-chicken(-\d+)?$/);
+  });
+
+  it("should return empty array when ingredient not found", async () => {
+    const res = await authGet(
+      "/api/recipes?ingredient=nonexistent",
+      ownerToken,
+    );
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("should filter by ingredient correctly when multiple exist", async () => {
+    // Create recipe with multiple ingredients
+    await authPost("/api/recipes", ownerToken, {
+      title: "Complex Dish",
+      ingredients: [{ item: "chicken" }, { item: "beef" }, { item: "pork" }],
+      instructions: "Cook all meats",
+      prepTime: 30,
+      cookTime: 60,
+      servings: 4,
+    });
+
+    const res = await authGet("/api/recipes?ingredient=beef", ownerToken);
+    expect(res.statusCode).toBe(200);
+
+    const complexDish = res.body.find((r: any) => r.title === "Complex Dish");
+    expect(complexDish).toBeDefined();
+    expect(complexDish.ingredients.some((i: any) => i.item === "beef")).toBe(
+      true,
+    );
   });
 
   it("should reject empty ingredients array", async () => {
@@ -144,6 +174,19 @@ describe("POST /api/recipes", () => {
     const res = await authPost("/api/recipes", ownerToken, {
       // title missing
       ingredients: ["x"],
+      instructions: "test",
+      prepTime: 1,
+      cookTime: 1,
+      servings: 1,
+    });
+
+    expect([400, 422]).toContain(res.statusCode);
+  });
+
+  it("should reject ingredient with unit but no quantity", async () => {
+    const res = await authPost("/api/recipes", ownerToken, {
+      title: "Bad Ingredient",
+      ingredients: [{ item: "salt", unit: "tsp" }],
       instructions: "test",
       prepTime: 1,
       cookTime: 1,
@@ -177,7 +220,10 @@ describe("GET /api/recipes", () => {
   it("should support query filter", async () => {
     const res = await authGet("/api/recipes?ingredient=chicken", ownerToken);
     expect(res.statusCode).toBe(200);
-    res.body.forEach((r: any) => expect(r.ingredients).toContain("chicken"));
+
+    res.body.forEach((r: any) => {
+      expect(r.ingredients.some((i: any) => i.item === "chicken")).toBe(true);
+    });
   });
 
   it("should fail without token", async () => {
@@ -253,7 +299,7 @@ describe("DELETE /api/recipes/:id", () => {
   beforeAll(async () => {
     const recipe = await Recipe.create({
       title: "Temp Delete",
-      ingredients: ["salt"],
+      ingredients: [{ item: "salt" }],
       instructions: "Just do it.",
       prepTime: 1,
       cookTime: 1,
