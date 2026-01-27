@@ -12,10 +12,14 @@ import User from "../models/User";
 import { patchUserFromToken } from "../utils/patchUserFromToken";
 import { assertNotNull } from "../utils/assert";
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 // Create a new recipe
 export const createRecipe = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     assertAuthenticated(req);
@@ -23,6 +27,10 @@ export const createRecipe = async (
       ...req.body,
       user: req.user.id,
     };
+
+    // prevent client from overriding slug
+    delete recipeData.slug;
+
     const newRecipe = new Recipe(recipeData);
     const savedRecipe = await newRecipe.save();
     res.status(201).json(savedRecipe);
@@ -34,7 +42,7 @@ export const createRecipe = async (
 // Get all recipes created by the authenticated user
 export const getMyRecipes = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const userId = req.user?.id;
@@ -43,8 +51,15 @@ export const getMyRecipes = async (
 
     assertAuthenticated(req);
 
-    if (ingredient) {
-      query.ingredients = { $in: [ingredient] };
+    if (
+      ingredient &&
+      typeof ingredient === "string" &&
+      ingredient.trim() !== ""
+    ) {
+      const escaped = escapeRegex(ingredient.trim());
+      query["ingredients.item"] = {
+        $regex: new RegExp(`^${escaped}$`, "i"),
+      };
     }
 
     const recipes = await Recipe.find(query);
@@ -57,7 +72,7 @@ export const getMyRecipes = async (
 // Get all public recipes
 export const getPublicRecipes = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { ingredient, tag } = req.query;
@@ -84,7 +99,7 @@ export const getPublicRecipes = async (
 // Get a single recipe by slug
 export const getRecipeBySlug = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const recipe = await Recipe.findOne({ slug: req.params.slug });
@@ -106,9 +121,9 @@ export const getRecipeBySlug = async (
     }
 
     if (!req.user || !isOwner(recipe, req)) {
-        res.status(403).json({ message: "Access denied" });
-        return;
-      }
+      res.status(403).json({ message: "Access denied" });
+      return;
+    }
 
     res.status(200).json(recipe);
   } catch (error) {
@@ -119,7 +134,7 @@ export const getRecipeBySlug = async (
 // Update an existing recipe
 export const updateRecipe = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const [recipe, error] = await getOwnedRecipeOrError(req, req.params.id);
@@ -146,7 +161,7 @@ export const updateRecipe = async (
 // Delete a recipe
 export const deleteRecipe = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const [recipe, error] = await getOwnedRecipeOrError(req, req.params.id);
@@ -163,7 +178,7 @@ export const deleteRecipe = async (
 
 export const favoriteRecipe = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     assertAuthenticated(req);
@@ -190,7 +205,7 @@ export const favoriteRecipe = async (
 
 export const unfavoriteRecipe = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     assertAuthenticated(req);
@@ -206,7 +221,7 @@ export const unfavoriteRecipe = async (
     assertNotNull(user, "User");
 
     user.favoriteRecipes = user.favoriteRecipes.filter(
-      (recipeId) => recipeId.toString() != id
+      (recipeId) => recipeId.toString() != id,
     );
     await user.save();
     res.status(200).json({ message: "Recipe removed from favorites" });
@@ -217,7 +232,7 @@ export const unfavoriteRecipe = async (
 
 export const getFavoriteRecipes = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     assertAuthenticated(req);
