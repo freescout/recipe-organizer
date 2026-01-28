@@ -16,6 +16,7 @@ export default async function RecipeDetailPage({ params }: PageProps) {
       <h1 className="text-4xl font-bold text-center uppercase mb-2">
         {recipe.title}
       </h1>
+
       {/* Info grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 text-center border-y py-4 mb-6">
         <div>
@@ -37,6 +38,8 @@ export default async function RecipeDetailPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Image */}
       <div className="relative w-full aspect-video mb-6 rounded-xl overflow-hidden">
         <Image
           src={recipe.imageUrl || "/images/placeholder.jpg"}
@@ -49,15 +52,35 @@ export default async function RecipeDetailPage({ params }: PageProps) {
 
       {/* Ingredients */}
       <h2 className="text-2xl font-bold mb-3">Ingredients</h2>
-      <ul className="list-disc list-inside mb-6 text-gray-800 leading-relaxed">
-        {recipe.ingredients.map((item: string) => (
-          <li key={item}>{item}</li>
-        ))}
+      <ul className="list-disc list-inside mb-6 text-gray-800 leading-relaxed space-y-1">
+        {recipe.ingredients.map(
+          (
+            ing: {
+              item: string;
+              quantity?: number;
+              unit?: string;
+            },
+            index: number,
+          ) => (
+            <li key={`${index}-${ing.item}`}>
+              {ing.quantity && `${ing.quantity} `}
+              {ing.unit && `${ing.unit} `}
+              {ing.item}
+            </li>
+          ),
+        )}
       </ul>
 
       {/* Instructions */}
       <h2 className="text-2xl font-bold mb-3">Instructions</h2>
-      <p className="text-gray-800 whitespace-pre-line">{recipe.instructions}</p>
+      <ol className="list-decimal list-inside space-y-2 text-gray-800 leading-relaxed">
+        {(Array.isArray(recipe.instructions)
+          ? recipe.instructions
+          : [recipe.instructions]
+        ).map((step: string, index: number) => (
+          <li key={`${index}-${step}`}>{step}</li>
+        ))}
+      </ol>
     </div>
   );
 }
