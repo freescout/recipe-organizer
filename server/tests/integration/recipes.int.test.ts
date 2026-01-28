@@ -102,7 +102,7 @@ describe("POST /api/recipes", () => {
     const res = await authPost("/api/recipes", ownerToken, {
       title: "Lemon Fish Curry",
       ingredients: [{ item: "fish" }, { item: "lemon" }],
-      instructions: "Cook it.",
+      instructions: ["Cook it."],
       prepTime: 10,
       cookTime: 15,
       servings: 2,
@@ -118,7 +118,7 @@ describe("POST /api/recipes", () => {
     const res = await authPost("/api/recipes", ownerToken, {
       title: "Grilled Chicken",
       ingredients: [{ item: "x" }],
-      instructions: "test",
+      instructions: ["test"],
       prepTime: 1,
       cookTime: 1,
       servings: 1,
@@ -137,12 +137,25 @@ describe("POST /api/recipes", () => {
     expect(res.body).toEqual([]);
   });
 
+  it("should reject instructions with empty steps", async () => {
+    const res = await authPost("/api/recipes", ownerToken, {
+      title: "Bad Instructions",
+      ingredients: [{ item: "x" }],
+      instructions: [""],
+      prepTime: 1,
+      cookTime: 1,
+      servings: 1,
+    });
+
+    expect([400, 422]).toContain(res.statusCode);
+  });
+
   it("should filter by ingredient correctly when multiple exist", async () => {
     // Create recipe with multiple ingredients
     await authPost("/api/recipes", ownerToken, {
       title: "Complex Dish",
       ingredients: [{ item: "chicken" }, { item: "beef" }, { item: "pork" }],
-      instructions: "Cook all meats",
+      instructions: ["Cook all meats"],
       prepTime: 30,
       cookTime: 60,
       servings: 4,
@@ -162,7 +175,7 @@ describe("POST /api/recipes", () => {
     const res = await authPost("/api/recipes", ownerToken, {
       title: "Bad recipe",
       ingredients: [],
-      instructions: "test",
+      instructions: ["test"],
       prepTime: 1,
       cookTime: 1,
       servings: 1,
@@ -174,7 +187,7 @@ describe("POST /api/recipes", () => {
     const res = await authPost("/api/recipes", ownerToken, {
       // title missing
       ingredients: ["x"],
-      instructions: "test",
+      instructions: ["test"],
       prepTime: 1,
       cookTime: 1,
       servings: 1,
@@ -187,7 +200,7 @@ describe("POST /api/recipes", () => {
     const res = await authPost("/api/recipes", ownerToken, {
       title: "Bad Ingredient",
       ingredients: [{ item: "salt", unit: "tsp" }],
-      instructions: "test",
+      instructions: ["test"],
       prepTime: 1,
       cookTime: 1,
       servings: 1,
@@ -300,7 +313,7 @@ describe("DELETE /api/recipes/:id", () => {
     const recipe = await Recipe.create({
       title: "Temp Delete",
       ingredients: [{ item: "salt" }],
-      instructions: "Just do it.",
+      instructions: ["Just do it."],
       prepTime: 1,
       cookTime: 1,
       servings: 1,
@@ -348,7 +361,7 @@ describe("Favorite Recipes", () => {
       ownerToken,
       {},
     );
-    //expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(200);
   });
 
   it("should return favorite recipes", async () => {
