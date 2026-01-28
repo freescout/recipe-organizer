@@ -100,10 +100,13 @@ const RecipeSchema = new Schema<IRecipe>(
     instructions: {
       type: [String],
       required: [true, "Instructions are required"],
-      validator: (v: string[]) =>
-        Array.isArray(v) &&
-        v.length > 0 &&
-        v.every((step) => typeof step === "string" && step.trim().length > 0),
+      validate: {
+        validator: (v: string[]) =>
+          Array.isArray(v) &&
+          v.length > 0 &&
+          v.every((step) => typeof step === "string" && step.trim().length > 0),
+        message: "Instructions must contain at least one non-empty step",
+      },
     },
     prepTime: {
       type: Number,
