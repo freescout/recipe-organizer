@@ -23,6 +23,23 @@ export const createRecipe = async (
 ): Promise<void> => {
   try {
     assertAuthenticated(req);
+
+    const { instructions } = req.body;
+
+    if (
+      !Array.isArray(instructions) ||
+      instructions.length === 0 ||
+      instructions.some(
+        (step: unknown) => typeof step !== "string" || step.trim().length === 0,
+      )
+    ) {
+      res.status(400).json({
+        message:
+          "Instructions must contain at least one non-empty instruction step",
+      });
+      return;
+    }
+
     const recipeData = {
       ...req.body,
       user: req.user.id,
@@ -33,6 +50,7 @@ export const createRecipe = async (
 
     const newRecipe = new Recipe(recipeData);
     const savedRecipe = await newRecipe.save();
+
     res.status(201).json(savedRecipe);
   } catch (error) {
     handleError(res, error, "creating recipe");

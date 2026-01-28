@@ -10,7 +10,7 @@ export interface IIngredient {
 export interface IRecipe {
   title: string;
   ingredients: IIngredient[];
-  instructions: string;
+  instructions: string[];
   prepTime: number;
   cookTime: number;
   servings: number;
@@ -98,9 +98,12 @@ const RecipeSchema = new Schema<IRecipe>(
       },
     },
     instructions: {
-      type: String,
+      type: [String],
       required: [true, "Instructions are required"],
-      trim: true,
+      validator: (v: string[]) =>
+        Array.isArray(v) &&
+        v.length > 0 &&
+        v.every((step) => typeof step === "string" && step.trim().length > 0),
     },
     prepTime: {
       type: Number,
