@@ -26,6 +26,7 @@
     "@types/express": "^5.0.1",
     "@types/jest": "29.5.14",
     "@types/jsonwebtoken": "^9.0.9",
+    "@types/multer": "^2.0.0",
     "@types/node": "^24.10.1",
     "@types/supertest": "^6.0.3",
     "@types/swagger-ui-express": "^4.1.8",
@@ -37,11 +38,13 @@
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.2",
+    "multer": "^2.0.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   }

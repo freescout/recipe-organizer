@@ -9,8 +9,10 @@ import {
   favoriteRecipe,
   unfavoriteRecipe,
   getFavoriteRecipes,
+  uploadRecipeImage,
 } from "../controllers/recipe";
 import { requireAuth } from "../middlewares/requireAuth";
+import { upload } from "../middlewares/upload";
 
 const router = express.Router();
 
@@ -20,6 +22,9 @@ router.get("/slug/:slug", getRecipeBySlug);
 
 // Protected routes (require JWT)
 router.use(requireAuth);
+
+// Image upload
+router.post("/:id/image", upload.single("image"), uploadRecipeImage);
 
 router.get("/favorites", getFavoriteRecipes);
 router.post("/:id/favorite", favoriteRecipe);

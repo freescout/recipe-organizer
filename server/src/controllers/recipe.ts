@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Recipe from "../models/Recipe";
+import cloudinary from "../config/cloudinary";
 import { assertAuthenticated } from "../utils/assertAuthenticated";
 import {
   getOwnedRecipeOrError,
@@ -263,5 +264,58 @@ export const getFavoriteRecipes = async (
     res.status(200).json(user?.favoriteRecipes);
   } catch (error) {
     handleError(res, error, "fetching favorite recipes");
+  }
+};
+
+export const uploadRecipeImage = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    // requireAuth already ran, so req.user exists
+    const recipe = await Recipe.findById(req.params.id);
+
+    if (!recipe) {
+      res.status(404).json({ message: "Recipe not found" });
+      return;
+    }
+
+    // Ownership check
+    if (!recipe.user.equals(req.user!.id)) {
+      res.status(403).json({ message: "Forbidden" });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ message: "No image provided" });
+      return;
+    }
+
+    const file = req.file;
+
+    const result = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder: "recipes",
+            resource_type: "image",
+          },
+          (error, uploadResult) => {
+            if (error) reject(error);
+            else resolve(uploadResult);
+          },
+        )
+        .end(file.buffer);
+    });
+
+    recipe.imageUrl = result.secure_url;
+    await recipe.save();
+
+    res.status(200).json({
+      imageUrl: recipe.imageUrl,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Image upload failed" });
   }
 };
