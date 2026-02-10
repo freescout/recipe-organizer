@@ -1,17 +1,8 @@
-// client/src/app/layout.tsx
-import "./globals.css";
 import { ReactNode } from "react";
-import { Playfair_Display, Inter } from "next/font/google";
-import Header from "./components/Header";
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["600"],
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-});
+import Header from "@/app/components/Header";
+import "./globals.css";
+import { inter } from "@/app/lib/fonts";
 
 export const metadata = {
   title: "Tasty Tales",
@@ -28,4 +19,3 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
-export { playfair };

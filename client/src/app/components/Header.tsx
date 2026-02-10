@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { playfair } from "@/app/layout"; // Import the font
+import { playfair } from "@/app/lib/fonts";
 
 export default function Header() {
   return (
