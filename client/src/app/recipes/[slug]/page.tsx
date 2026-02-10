@@ -2,12 +2,13 @@ import { getRecipeBySlug } from "@/lib/api";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
-interface PageProps {
+export default async function RecipeDetailPage({
+  params,
+}: {
   params: Promise<{ slug: string }>;
-}
-
-export default async function RecipeDetailPage({ params }: PageProps) {
+}) {
   const { slug } = await params;
+
   const recipe = await getRecipeBySlug(slug);
   if (!recipe) return notFound();
 
