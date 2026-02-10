@@ -23,21 +23,21 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
   return (
     <Link href={`/recipes/${recipe.slug}`}>
       <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="relative w-full aspect-square">
+        <div className="relative w-full aspect-[4/3]">
           {imageUrl && (
             <Image
               src={imgError ? "/images/placeholder.jpg" : imageUrl}
               alt={title}
               fill
-              className="object-cover"
+              className="object-cover object-top"
               sizes="(max-width: 768px) 100vw, 400px"
               priority={false}
               onError={() => setImgError(true)}
             />
           )}
         </div>
-        <div className="p-4">
-          <h2 className="text-xl font-semibold text-center uppercase text-gray-800">
+        <div className="p-3">
+          <h2 className="mt-3 text-lg font-serif font-medium text-gray-900 leading-snug">
             {title}
           </h2>
           <FavoriteButton initialIsFavorited={false} />
@@ -51,7 +51,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="tex-xs bg-amber-100 tex-amber-800 px-2 py-1 rounded"
+                  className="text-xs bg-amber-100 tex-amber-800 px-2 py-1 rounded"
                 >
                   #{tag}
                 </span>
