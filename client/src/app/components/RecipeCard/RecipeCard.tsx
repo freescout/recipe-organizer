@@ -4,6 +4,7 @@ import FavoriteButton from "../FavoriteButton";
 import { Recipe } from "@/types";
 import { useState } from "react";
 import Link from "next/link";
+import { getTagStyle } from "@/lib/tagStyles";
 
 type RecipeCardProps = {
   recipe: Recipe;
@@ -51,7 +52,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-xs bg-amber-100 tex-amber-800 px-2 py-1 rounded"
+                  className={`text-xs font-medium px-2.5 py-1 rounded-full border ${getTagStyle(tag)}`}
                 >
                   #{tag}
                 </span>
