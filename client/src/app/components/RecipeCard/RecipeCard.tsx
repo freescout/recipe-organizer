@@ -23,7 +23,7 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
 
   return (
     <Link href={`/recipes/${recipe.slug}`}>
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
         <div className="relative w-full aspect-[4/3]">
           {imageUrl && (
             <Image
@@ -36,20 +36,20 @@ export default function RecipeCard({ recipe }: RecipeCardProps) {
               onError={() => setImgError(true)}
             />
           )}
+          <FavoriteButton initialIsFavorited={false} />
         </div>
-        <div className="p-3">
-          <h2 className="mt-3 text-lg font-serif font-medium text-gray-900 leading-snug">
+        <div className="p-4">
+          <h2 className="text-lg font-medium text-gray-900 leading-snug">
             {title}
           </h2>
-          <FavoriteButton initialIsFavorited={false} />
           <RecipeMeta
             prepTime={prepTime}
             cookTime={cookTime}
             servings={servings}
           />
           {tags && tags.length > 0 && (
-            <div className="flex flex-wrap mt-2 gap-2">
-              {tags.map((tag) => (
+            <div className="flex flex-wrap mt-3 gap-2">
+              {tags.slice(0, 3).map((tag) => (
                 <span
                   key={tag}
                   className={`text-xs font-medium px-2.5 py-1 rounded-full border ${getTagStyle(tag)}`}
