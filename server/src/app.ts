@@ -1,11 +1,10 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
+
 import authRoutes from "./routes/auth";
 import recipeRoutes from "./routes/recipe";
 import { setupSwagger } from "./swagger";
-
-dotenv.config();
+import { isDbConnected } from "./db";
 
 const app = express();
 
@@ -18,13 +17,17 @@ app.use(
       "https://recipe-organizer.onrender.com",
     ],
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
-  res.status(200).json({ status: "ok" });
+  const ok = isDbConnected();
+  res.status(ok ? 200 : 503).json({
+    status: ok ? "ok" : "degraded",
+    db: ok ? "connected" : "disconnected",
+  });
 });
 
 app.use("/api/auth", authRoutes);
