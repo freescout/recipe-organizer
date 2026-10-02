@@ -2,12 +2,7 @@ import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { Express } from "express";
 
-interface SwaggerOptions {
-  definition: object;
-  apis: string[];
-}
-
-const options: SwaggerOptions = {
+const options = {
   definition: {
     openapi: "3.0.0",
     info: {
@@ -26,11 +21,18 @@ const options: SwaggerOptions = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ["./src/routes/*.ts", "./src/models/*.ts", "./src/docs/openapi/*.ts"],
+  apis: [
+    "./src/routes/*.ts",
+    "./src/models/*.ts",
+    "./src/docs/openapi/*.ts",
+    "./dist/routes/*.js",
+    "./dist/models/*.js",
+    "./dist/docs/openapi/*.js",
+  ],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
 
 export function setupSwagger(app: Express) {
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
