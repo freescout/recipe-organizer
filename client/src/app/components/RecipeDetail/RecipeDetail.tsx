@@ -1,5 +1,6 @@
 import Image from "next/image";
 import RecipeMeta from "../RecipeMeta";
+import { getTagStyle } from "@/lib/tagStyles";
 
 type RecipeDetailProps = {
   title: string;
@@ -25,7 +26,7 @@ export default function RecipeDetail({
   return (
     <article className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow">
       {imageUrl && (
-        <div>
+        <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-6">
           <Image
             src={imageUrl}
             alt={title}
@@ -45,7 +46,7 @@ export default function RecipeDetail({
           {tags.map((tag) => (
             <span
               key={tag}
-              className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded"
+              className={`text-xs px-3 py-1 rounded-full font-medium border ${getTagStyle(tag)}`}
             >
               #{tag}
             </span>
