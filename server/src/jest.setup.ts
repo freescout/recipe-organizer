@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import path from "path";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
@@ -19,7 +20,6 @@ beforeAll(async () => {
     console.error("Failed to connect to test DB:", error);
     throw error;
   }
-  await mongoose.connect(process.env.TEST_DB_URI!);
 }, 10000);
 
 // Clean up and disconnect after all tests
@@ -31,11 +31,3 @@ afterAll(async () => {
     console.error("Cleanup error:", error);
   }
 }, 10000);
-
-// Clear all collections after each test
-/* afterEach(async () => {
-  const collections = mongoose.connection.collections;
-  for (const key in collections) {
-    await collections[key].deleteMany({});
-  }
-}); */
