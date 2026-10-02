@@ -1,5 +1,7 @@
 # 🍽️ Recipe Organizer
 
+![CI](https://github.com/freescout/recipe-organizer/actions/workflows/ci.yml/badge.svg)
+
 A full-stack monorepo app to manage, search, and plan recipes — built with Node.js, TypeScript, MongoDB, JWT Auth, and React/Next.js.
 The project uses Yarn Workspaces and Docker Compose for easy local and production setup.
 
@@ -99,7 +101,7 @@ This will start:
 Your server/.env should look like:
 
 ```env
-MONGODB_URI=mongodb://mongo:27017/recipe-organizer
+MONGO_URI=mongodb://mongo:27017/recipe-organizer
 JWT_SECRET=your-super-secret-key-change-this-in-production
 PORT=7000
 NODE_ENV=development
@@ -132,7 +134,7 @@ cp server/.env.example server/.env
 Edit server/.env
 
 ```env
-MONGODB_URI=mongodb://localhost:27017/recipe-organizer
+MONGO_URI=mongodb://localhost:27017/recipe-organizer
 JWT_SECRET=your-super-secret-key-change-this
 PORT=7000
 NODE_ENV=development
@@ -275,18 +277,18 @@ curl -X DELETE http://localhost:7000/api/recipes/68502e9413d75028b2311213 \
 The application is deployed and running at:
 
 - Client: https://recipe-organizer-client.vercel.app
-- API: https://recipe-organizer-server.onrender.com/api
+- API: https://recipe-organizer.onrender.com/api
 
 ## 📌 Roadmap
 
 - [x] User authentication (JWT + bcrypt)
 - [x] Recipe CRUD
 - [x] Production deployment
-- [ ] Image uploads (Cloudinary)
+- [x] Image uploads (Cloudinary)
 - [ ] Meal planner + grocery list
 - [ ] Redis cache for search
 - [ ] Background jobs (RabbitMQ)
-- [ ] CI/CD (GitHub Actions)
+- [x] CI/CD (GitHub Actions)
 
 📄 License
 MIT
