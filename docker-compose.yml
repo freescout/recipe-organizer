@@ -15,7 +15,7 @@ services:
       context: .
       dockerfile: client/Dockerfile.dev
     ports:
-      - "3001:3000"
+      - "3001:3001"
     volumes:
       - ./client:/app/client
       - /app/client/node_modules
