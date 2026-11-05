@@ -1,11 +1,7 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import User, { IUser } from "../models/User";
 import { generateToken } from "../utils/jwt";
-
-const SECRET_KEY = process.env.SECRET_KEY || "secret_key";
-const EXPIRATION_TIME = process.env.JWT_EXPIRES_IN || "1h";
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -15,6 +11,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       res.status(409).json({ message: "User already exists" });
+      return;
     }
 
     // Hash the password
@@ -41,7 +38,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       message: "User registered successfully",
       user: {
         id: savedUser._id,
-        username: savedUser.name,
+        name: savedUser.name,
         email: savedUser.email,
       },
       token,
@@ -68,14 +65,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const options: jwt.SignOptions = {
-      expiresIn: EXPIRATION_TIME as any,
-    };
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      SECRET_KEY,
-      options
-    );
+    const token = generateToken({ id: user._id.toString(), email: user.email });
     res.json({
       message: "Login successful",
       token,
