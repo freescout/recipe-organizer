@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import mongoose from "mongoose";
 import { generateToken } from "../../src/utils/jwt";
 import User from "../../src/models/User";
@@ -59,8 +60,8 @@ describe("POST /api/recipes/:id/image", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.imageUrl).toBeDefined();
-    expect(res.body.imageUrl).toBe(
-      "https://res.cloudinary.com/test/image/upload/test.jpg",
+    expect(res.body.imageUrl).toMatch(
+      /^https:\/\/res\.cloudinary\.com\/test\/image\/upload\/test-\d+\.jpg$/,
     );
 
     const updatedRecipe = await Recipe.findById(recipeId);
@@ -129,6 +130,7 @@ describe("POST /api/recipes/:id/image", () => {
 
     expect(res2.statusCode).toBe(200);
     expect(res2.body.imageUrl).toBeDefined();
+    expect(res2.body.imageUrl).not.toBe(firstImageUrl);
 
     // Verify the recipe has the new URL
     const updatedRecipe = await Recipe.findById(recipeId);

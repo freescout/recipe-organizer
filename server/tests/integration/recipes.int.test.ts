@@ -15,6 +15,7 @@ const owner = {
 };
 const stranger = {
   id: new mongoose.Types.ObjectId().toHexString(),
+  name: "stranger",
   email: "viewer@example.com",
 };
 const ownerToken = generateToken(owner);
@@ -41,13 +42,13 @@ beforeAll(async () => {
     _id: owner.id,
     name: owner.name,
     email: owner.email,
-    password: "dummy-password", // doesn't matter for the test
+    password: "dummy-password",
   });
 
   const publicRecipe = await Recipe.create({
     title: "Grilled Chicken",
     ingredients: [{ item: "chicken" }, { item: "garlic" }, { item: "lemon" }],
-    instructions: "Grill it.",
+    instructions: ["Grill it."],
     prepTime: 10,
     cookTime: 20,
     servings: 2,
@@ -60,7 +61,7 @@ beforeAll(async () => {
   const privateRecipe = await Recipe.create({
     title: "Secret Lamb Curry",
     ingredients: [{ item: "lamb" }, { item: "spices" }],
-    instructions: "Cook slowly",
+    instructions: ["Cook slowly"],
     prepTime: 20,
     cookTime: 60,
     servings: 4,
@@ -69,6 +70,25 @@ beforeAll(async () => {
     slug: "secret-lamb-curry",
   });
   privateRecipeId = (privateRecipe._id as mongoose.Types.ObjectId).toString();
+
+  await User.create({
+    _id: stranger.id,
+    name: stranger.name,
+    email: stranger.email,
+    password: "dummy-password",
+  });
+
+  await Recipe.create({
+    title: "Stranger's Soup",
+    ingredients: [{ item: "carrot" }, { item: "onion" }],
+    instructions: ["Simmer it."],
+    prepTime: 5,
+    cookTime: 30,
+    servings: 2,
+    user: stranger.id,
+    isPublic: false,
+    slug: "strangers-soup",
+  });
 });
 
 describe("GET /api/recipes/public", () => {
@@ -76,6 +96,7 @@ describe("GET /api/recipes/public", () => {
     const res = await request(app).get("/api/recipes/public");
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThan(0);
     res.body.forEach((recipe: any) => {
       expect(recipe.isPublic).toBe(true);
     });
@@ -85,6 +106,7 @@ describe("GET /api/recipes/public", () => {
     const res = await authGet("/api/recipes/public", strangerToken);
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThan(0);
     res.body.forEach((recipe: any) => {
       expect(recipe.isPublic).toBe(true);
     });
@@ -128,15 +150,6 @@ describe("POST /api/recipes", () => {
     expect(res.body.slug).toMatch(/^grilled-chicken(-\d+)?$/);
   });
 
-  it("should return empty array when ingredient not found", async () => {
-    const res = await authGet(
-      "/api/recipes?ingredient=nonexistent",
-      ownerToken,
-    );
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual([]);
-  });
-
   it("should reject instructions with empty steps", async () => {
     const res = await authPost("/api/recipes", ownerToken, {
       title: "Bad Instructions",
@@ -147,7 +160,88 @@ describe("POST /api/recipes", () => {
       servings: 1,
     });
 
-    expect([400, 422]).toContain(res.statusCode);
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("should reject empty ingredients array", async () => {
+    const res = await authPost("/api/recipes", ownerToken, {
+      title: "Bad recipe",
+      ingredients: [],
+      instructions: ["test"],
+      prepTime: 1,
+      cookTime: 1,
+      servings: 1,
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("should fail if required field is missing", async () => {
+    const res = await authPost("/api/recipes", ownerToken, {
+      // title missing
+      ingredients: [{ item: "x" }],
+      instructions: ["test"],
+      prepTime: 1,
+      cookTime: 1,
+      servings: 1,
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body.errors).toEqual(["Title is required"]);
+  });
+
+  it("should reject ingredient with unit but no quantity", async () => {
+    const res = await authPost("/api/recipes", ownerToken, {
+      title: "Bad Ingredient",
+      ingredients: [{ item: "salt", unit: "tsp" }],
+      instructions: ["test"],
+      prepTime: 1,
+      cookTime: 1,
+      servings: 1,
+    });
+
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("should return 401 without token", async () => {
+    const res = await request(app)
+      .post("/api/recipes")
+      .send({ title: "No Auth" });
+    expect(res.statusCode).toBe(401);
+  });
+});
+
+describe("GET /api/recipes", () => {
+  it("should return owner's recipes", async () => {
+    const res = await authGet("/api/recipes", ownerToken);
+    expect(res.statusCode).toBe(200);
+    res.body.forEach((r: any) => expect(r.user).toBe(owner.id));
+  });
+
+  it("should return stranger's recipes", async () => {
+    const res = await authGet("/api/recipes", strangerToken);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body.some((r: any) => r.title === "Stranger's Soup")).toBe(true);
+    res.body.forEach((r: any) => expect(r.user).toBe(stranger.id));
+  });
+
+  it("should support query filter", async () => {
+    const res = await authGet("/api/recipes?ingredient=chicken", ownerToken);
+    expect(res.statusCode).toBe(200);
+    expect(res.body.length).toBeGreaterThan(0);
+
+    res.body.forEach((r: any) => {
+      expect(r.ingredients.some((i: any) => i.item === "chicken")).toBe(true);
+    });
+  });
+
+  it("should return empty array when ingredient not found", async () => {
+    const res = await authGet(
+      "/api/recipes?ingredient=nonexistent",
+      ownerToken,
+    );
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual([]);
   });
 
   it("should filter by ingredient correctly when multiple exist", async () => {
@@ -169,74 +263,6 @@ describe("POST /api/recipes", () => {
     expect(complexDish.ingredients.some((i: any) => i.item === "beef")).toBe(
       true,
     );
-  });
-
-  it("should reject empty ingredients array", async () => {
-    const res = await authPost("/api/recipes", ownerToken, {
-      title: "Bad recipe",
-      ingredients: [],
-      instructions: ["test"],
-      prepTime: 1,
-      cookTime: 1,
-      servings: 1,
-    });
-    expect([400, 422]).toContain(res.statusCode);
-  });
-
-  it("should fail if required field is missing", async () => {
-    const res = await authPost("/api/recipes", ownerToken, {
-      // title missing
-      ingredients: ["x"],
-      instructions: ["test"],
-      prepTime: 1,
-      cookTime: 1,
-      servings: 1,
-    });
-
-    expect([400, 422]).toContain(res.statusCode);
-  });
-
-  it("should reject ingredient with unit but no quantity", async () => {
-    const res = await authPost("/api/recipes", ownerToken, {
-      title: "Bad Ingredient",
-      ingredients: [{ item: "salt", unit: "tsp" }],
-      instructions: ["test"],
-      prepTime: 1,
-      cookTime: 1,
-      servings: 1,
-    });
-
-    expect([400, 422]).toContain(res.statusCode);
-  });
-
-  it("should return 401 without token", async () => {
-    const res = await request(app)
-      .post("/api/recipes")
-      .send({ title: "No Auth" });
-    expect(res.statusCode).toBe(401);
-  });
-});
-
-describe("GET /api/recipes", () => {
-  it("should return owner's recipes", async () => {
-    const res = await authGet("/api/recipes", ownerToken);
-    expect(res.statusCode).toBe(200);
-    res.body.forEach((r: any) => expect(r.user).toBe(owner.id));
-  });
-
-  it("should return stranger's recipes", async () => {
-    const res = await authGet("/api/recipes", strangerToken);
-    expect(res.statusCode).toBe(200);
-    res.body.forEach((r: any) => expect(r.user).toBe(stranger.id));
-  });
-
-  it("should support query filter", async () => {
-    const res = await authGet("/api/recipes?ingredient=chicken", ownerToken);
-    expect(res.statusCode).toBe(200);
-
-    res.body.forEach((r: any) => {
-      expect(r.ingredients.some((i: any) => i.item === "chicken")).toBe(true);
-    });
   });
 
   it("should fail without token", async () => {
@@ -264,7 +290,7 @@ describe("GET /api/recipes/slug/:slug", () => {
       "/api/recipes/slug/secret-lamb-curry",
       strangerToken,
     );
-    expect([403, 404]).toContain(res.statusCode);
+    expect(res.statusCode).toBe(403);
   });
 
   it("should return 404 for unknown slug", async () => {
@@ -288,14 +314,14 @@ describe("PUT /api/recipes/:id", () => {
       strangerToken,
       { title: "Hack" },
     );
-    expect([403, 404]).toContain(res.statusCode);
+    expect(res.statusCode).toBe(403);
   });
 
   it("should return 400 on invalid data", async () => {
     const res = await authPut(`/api/recipes/${privateRecipeId}`, ownerToken, {
       servings: -2,
     });
-    expect([400, 422]).toContain(res.statusCode);
+    expect(res.statusCode).toBe(400);
   });
 
   it("should return 401 if no token is provided", async () => {
@@ -341,7 +367,7 @@ describe("DELETE /api/recipes/:id", () => {
       `/api/recipes/${publicRecipeId}`,
       strangerToken,
     );
-    expect([403, 404]).toContain(res.statusCode);
+    expect(res.statusCode).toBe(403);
   });
 });
 
