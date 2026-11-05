@@ -1,6 +1,7 @@
 "use client";
 
 import axios from "axios";
+import { useAuth } from "@/context/AuthContext";
 import { loginRequest } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,13 +12,14 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
+  const { login } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
       const data = await loginRequest(email, password);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      login(data.token, data.user);
       router.push("/");
     } catch (err) {
       // Use the server's message if there is one
