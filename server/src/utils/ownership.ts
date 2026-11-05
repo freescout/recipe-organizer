@@ -14,7 +14,7 @@ export const getOwnedRecipeOrError = async (
   assertAuthenticated(req);
   const recipe = await Recipe.findById(recipeId);
   if (!recipe) {
-    return [null, { status: 404, message: "Recope not found" }];
+    return [null, { status: 404, message: "Recipe not found" }];
   }
 
   if (!isOwner(recipe, req)) {
