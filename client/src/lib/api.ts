@@ -45,3 +45,9 @@ export const getRecipeBySlug = async (slug: string) => {
     return null;
   }
 };
+
+// Log in and get back { token, user }
+export const loginRequest = async (email: string, password: string) => {
+  const res = await api.post("/auth/login", { email, password });
+  return res.data;
+};
