@@ -9,6 +9,17 @@ services:
       - server/.env
     networks:
       - app-network
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-dev-data:/data/db
+    networks:
+      - app-network
 
   client:
     build:
@@ -32,3 +43,6 @@ services:
 
 networks:
   app-network:
+
+volumes:
+  mongo-dev-data:
