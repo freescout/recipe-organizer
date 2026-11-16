@@ -14,29 +14,48 @@ The project uses Yarn Workspaces and Docker Compose for easy local and productio
 ## 📦 Tech Stack
 
 - **Backend**: Node.js, Express, TypeScript
-- **Frontend**: Next.js + React
+- **Frontend**: Next.js, React, Typescript, Tailwind CSS
 - **Database**: MongoDB (Mongoose)
 - **Auth**: JWT, bcrypt
 - **API**: REST + OpenAPI
-- **DevOps**: Docker, Docker Compose
+- **Testing**: Jest + Supertest (backend), Playwright (E2E)
+- **UI development**: Storybook (component stories)
+- **DevOps**: Docker, Docker Compose, GitHub Actions, Vercel, Render
 - **Other**: Redis, RabbitMQ (upcoming)
 
 ## 🗂️ Monorepo Structure
 
 ```bash
 server/        # Node.js + Express + TypeScript backend
-├── controllers/
-├── models/
-├── routes/
-├── services/
-├── utils/
-├── middlewares/
-└── index.ts
+├── src/
+│   ├── controllers/         # auth, recipe: request handlers
+│   ├── models/              # Mongoose models: User, Recipe
+│   ├── routes/              # Express routers
+│   ├── middlewares/         # requireAuth (JWT), upload (images)
+│   ├── utils/               # jwt, slugify, error handling...
+│   ├── config/              # Cloudinary setup
+│   ├── docs/                # OpenAPI spec
+│   ├── app.ts               # Express app (routes, middleware)
+│   ├── db.ts                # MongoDB connection
+│   └── index.ts             # Entry point: starts server + DB
+├── tests/
+│   ├── unit/                # jwt, slugify, requireAuth
+│   └── integration/         # auth, recipes, image upload (Supertest)
+├── scripts/                 # seed-user, print-token, seed
+└── package.json
 
 client/        # Next.js + React frontend
-├── app/
-├── components/
-├── pages/
+├── src/
+│   ├── app/                 # App Router: pages and layouts
+│   │   ├── components/      # Header, RecipeCard, RecipeForm...
+│   │   ├── login/
+│   │   ├── register/
+│   │   └── recipes/
+│   ├── context/             # AuthContext (user, login, logout)
+│   ├── lib/                 # API client (axios)
+│   └── types/
+├── tests-e2e/               # Playwright end-to-end tests
+├── playwright.config.ts
 └── package.json
 
 ```
@@ -44,9 +63,10 @@ client/        # Next.js + React frontend
 Root:
 
 ```bash
-├── docker-compose.yml
-├── package.json            # yarn workspaces config
-├── .env                    # shared environment vars
+├── docker-compose.yml       # Local dev: client, server, MongoDB
+├── docker-compose.test.yml  # MongoDB for backend tests (port 27018)
+├── .github/workflows/       # CI: build, tests, deploy
+├── package.json             # Yarn workspaces config
 └── README.md
 ```
 
@@ -77,53 +97,59 @@ server and client workspaces
 
 ### 2. Choose your Development Mode
 
-### Option A : Docker Compose (Recommended)
+### Option A: Docker Compose (Recommended)
 
-Easiest setup - handles MongoDB, server, and client all at once
+Easiest setup: starts MongoDB, the server and the client together.
 
 ```bash
-# Copy example env file
+# 1. Create your env file
 cp server/.env.example server/.env
-
-# Start all services
-docker compose up --build
-# Add your MongoDB URI and JWT secret
 ```
 
-This will start:
-
-- Server: http://localhost:7000
-
-- Client: http://localhost:3000
-
-- MongoDB: localhost:27017 (with persistent volume)
-
-Your server/.env should look like:
+Then edit `server/.env` (at least set your own `JWT_SECRET`):
 
 ```env
-MONGO_URI=mongodb://mongo:27017/recipe-organizer
-JWT_SECRET=your-super-secret-key-change-this-in-production
+MONGO_URI=mongodb://mongo:27017/recipe-organizer-dev
+JWT_SECRET=your-super-secret-key-change-this
 PORT=7000
 NODE_ENV=development
 ```
+
+> `mongo` is the name of the MongoDB service in `docker-compose.yml`.
+> Use a local database for development, **not** your production
+> (Atlas) database: E2E tests create real users.
+
+```bash
+# 2. Start all services
+docker compose up --build
+```
+
+This starts:
+
+- Client: http://localhost:3001 (hot reload: `client/` is mounted)
+- Server: http://localhost:7000 (after server changes, run `docker compose up --build` again)
+- MongoDB: localhost:27017 (data kept in the `mongo-dev-data` volume)
+
+To inspect the local database, connect **MongoDB Compass** to
+`mongodb://localhost:27017`.
+
+To start over with an empty database: `docker compose down -v`
+(this deletes the volume and all local data).
 
 ### Option B - Local development (without Docker)
 
 Better for development - faster hot reload and easier debugging.
 
-Step 1: Install and start MongoDB locally
+Step 1: Start MongoDB
+
+The easiest way is to run only the MongoDB container:
 
 ```bash
-# macOS (via Homebrew)
-brew install mongodb-community
-brew services start mongodb-community
-
-# Ubuntu
-sudo apt install mongodb
-sudo systemctl start mongod
-
-# Or use MongoDB Atlas (cloud)
+docker compose up mongo
 ```
+
+(Or install MongoDB Community yourself, following the
+[official instructions](https://www.mongodb.com/docs/manual/administration/install-community/).)
 
 Step 2: Configure environment
 
@@ -153,7 +179,7 @@ yarn workspace recipe-organizer-client dev
 
 3. Verify Setup
 
-- Client: http://localhost:3000 (local) or http://localhost:3001 (Docker)
+- Client: http://localhost:3001 (local)
 - Server: http://localhost:7000/api
 - API Docs: http://localhost:7000/api/docs (if OpenAPI/Swagger is configured)
 
@@ -171,6 +197,34 @@ yarn workspace recipe-organizer-server test
 
 ```
 
+### End-to-end tests (Playwright)
+
+The client has **Playwright** E2E tests in `client/tests-e2e/`. They drive a real
+Chromium browser through the app: register, login, logout, wrong password and
+duplicate email. Each test creates its own user (random `@test.local` email),
+so they work on an empty database.
+
+> ⚠️ The tests create real users. Run them only against a **local** database,
+> never against production.
+
+```bash
+# One-time: download the browser
+yarn --cwd client playwright install chromium
+
+# Start the app (client on :3001, server on :7000, local MongoDB)
+docker compose up
+
+# In another terminal
+yarn --cwd client test:e2e
+
+# Watch the browser / debug interactively
+yarn --cwd client test:e2e --headed
+yarn --cwd client test:e2e --ui
+
+# Open the HTML report after a run
+yarn --cwd client playwright show-report
+```
+
 ## 🔧 Dev Scripts
 
 Quick helper scripts for backend testing or seeding:
@@ -181,6 +235,9 @@ yarn workspace recipe-organizer-server ts-node scripts/seed-user.ts
 
 # Generate a JWT for curl testing
 yarn workspace recipe-organizer-server ts-node scripts/print-token.ts
+
+# Browse UI components in Storybook (http://localhost:6006)
+yarn --cwd client storybook
 
 ```
 
