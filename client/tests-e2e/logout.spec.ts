@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { uniqueEmail } from "./helpers";
 
 test("registers a new user, logs them in and then logs them out", async ({
   page,
 }) => {
-  const email = `e2e-${Date.now()}@test.local`;
+  const email = uniqueEmail();
   const name = "New Tester";
 
   await page.goto("/register");

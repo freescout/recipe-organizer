@@ -1,28 +1,27 @@
 import { test, expect } from "@playwright/test";
+import { registerUserViaApi } from "./helpers";
 
 test("logs in an existing user and greets them in the header", async ({
   page,
+  request,
 }) => {
-  await page.goto("/login");
+  const user = await registerUserViaApi(request, "Login Tester");
 
-  await page.getByLabel("Your email").fill("e2e@test.local");
-  await page.getByLabel("Your password").fill("Password123!");
+  await page.goto("/login");
+  await page.getByLabel("Your email").fill(user.email);
+  await page.getByLabel("Your password").fill(user.password);
   await page.getByRole("button", { name: "Login" }).click();
 
   await expect(page).toHaveURL("/");
-  await expect(page.getByText("Hi, E2E User")).toBeVisible();
+  await expect(page.getByText(`Hi, ${user.name}`)).toBeVisible();
   await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
 });
 
 test("shows an error for a wrong password", async ({ page, request }) => {
-  const email = `e2e-${Date.now()}@test.local`;
+  const user = await registerUserViaApi(request);
 
-  const res = await request.post("http://localhost:7000/api/auth/register", {
-    data: { name: "Wrong Password Tester", email, password: "Password123!" },
-  });
-  expect(res.ok()).toBeTruthy();
   await page.goto("/login");
-  await page.getByLabel("Your email").fill(email);
+  await page.getByLabel("Your email").fill(user.email);
   await page.getByLabel("Your password").fill("WrongPassword!");
   await page.getByRole("button", { name: "Login" }).click();
 
