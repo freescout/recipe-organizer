@@ -52,16 +52,16 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
+    const DUMMY_HASH = "$2b$10$...";
 
     // Check if user exists
     const user = await User.findOne({ email });
-    if (!user) {
-      res.status(400).json({ message: "user not found" });
-      return;
-    }
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      res.status(400).json({ message: "Invalid credentiels" });
+    const match = await bcrypt.compare(
+      password,
+      user ? user.password : DUMMY_HASH,
+    );
+    if (!user || !match) {
+      res.status(401).json({ message: "Invalid email or password" });
       return;
     }
 
