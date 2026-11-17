@@ -181,7 +181,7 @@ yarn workspace recipe-organizer-client dev
 
 - Client: http://localhost:3001 (local)
 - Server: http://localhost:7000/api
-- API Docs: http://localhost:7000/api/docs (
+- API Docs: http://localhost:7000/api/docs
 
 ## 🧪 Tests
 
@@ -233,7 +233,7 @@ Quick helper scripts for backend testing or seeding:
 # Seed a test user
 yarn workspace recipe-organizer-server ts-node scripts/seed-user.ts
 
-# Generate a JWT for curl testing
+# Generate a JWT for testing protected routes (e.g. in Swagger UI)
 yarn workspace recipe-organizer-server ts-node scripts/print-token.ts
 
 # Browse UI components in Storybook (http://localhost:6006)
