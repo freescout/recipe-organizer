@@ -14,7 +14,7 @@ The project uses Yarn Workspaces and Docker Compose for easy local and productio
 ## 📦 Tech Stack
 
 - **Backend**: Node.js, Express, TypeScript
-- **Frontend**: Next.js, React, Typescript, Tailwind CSS
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS
 - **Database**: MongoDB (Mongoose)
 - **Auth**: JWT, bcrypt
 - **API**: REST + OpenAPI
@@ -160,7 +160,7 @@ cp server/.env.example server/.env
 Edit server/.env
 
 ```env
-MONGO_URI=mongodb://localhost:27017/recipe-organizer
+MONGO_URI=mongodb://localhost:27017/recipe-organizer-dev
 JWT_SECRET=your-super-secret-key-change-this
 PORT=7000
 NODE_ENV=development
@@ -177,11 +177,11 @@ yarn workspace recipe-organizer-server dev
 yarn workspace recipe-organizer-client dev
 ```
 
-3. Verify Setup
+### 3. Verify Setup
 
 - Client: http://localhost:3001 (local)
 - Server: http://localhost:7000/api
-- API Docs: http://localhost:7000/api/docs (if OpenAPI/Swagger is configured)
+- API Docs: http://localhost:7000/api/docs (
 
 ## 🧪 Tests
 
@@ -241,93 +241,14 @@ yarn --cwd client storybook
 
 ```
 
----
+## 🔍 Exploring the API
 
-## 🧪 Testing with CURL
+Interactive API docs (Swagger UI) are available at
+http://localhost:7000/api/docs when the server is running.
 
-✅ Prerequisites
-
-1. Create a user and get its ID
-
-```bash
-yarn workspace recipe-organizer-server ts-node scripts/seed-user.ts  // USER ID: 684c475048c20d02be2eea6a
-```
-
-2. Generate JWT token
-
-```js
-yarn workspace recipe-organizer-server ts-node scripts/print-token.ts
-```
-
-3. Store credentials in shell variables
-
-```bash
-export TOKEN="<your-jwt-token>"
-export USER_ID="<user_id from script>"
-```
-
-### 🔍 Test Routes with `curl`
-
-Here’s a sequence of sample `curl` commands (replace ports or paths if different):
-
-#### 1. 🆓 Public routes (no token needed)
-
-```bash
-curl http://localhost:7000/api/recipes/public
-curl http://localhost:7000/api/recipes/slug/avocado-toast
-
-```
-
-### 2. 🔐 Protected route: Get user profile or favorites
-
-```bash
-curl -H "Authorization: Bearer $TOKEN" http://localhost:7000/api/recipes/favorites
-```
-
-### 3. ➕ Create a new recipe (POST)
-
-```bash
-curl -X POST http://localhost:7000/api/recipes \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-        "title": "Rice Pilaf",
-        "ingredients": ["rice", "salt"],
-        "instructions": "Boil water. Add rice.",
-        "prepTime": 5,
-        "cookTime": 15,
-        "servings": 2,
-        "tags": ["easy", "vegan"]
-      }'
-
-```
-
-### 4. ❤️ Add/remove favorite
-
-```bash
-curl -X POST http://localhost:7000/api/recipes/$USER_ID/favorite \
-  -H "Authorization: Bearer $TOKEN"
-
-curl -X DELETE http://localhost:7000/api/recipes/$USER_ID/favorite \
-  -H "Authorization: Bearer $TOKEN"
-
-```
-
-### 5. 🔄 Update recipe (PUT)
-
-```bash
-curl -X PUT http://localhost:7000/api/recipes/68502e9413d75028b2311213 \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"title": "Turkish Rice"}'
-```
-
-### 6. 🗑️ Delete recipe
-
-```bash
-curl -X DELETE http://localhost:7000/api/recipes/68502e9413d75028b2311213 \
-  -H "Authorization: Bearer $TOKEN"
-```
+To call protected routes, get a token (log in, or run
+`yarn workspace recipe-organizer-server ts-node scripts/print-token.ts`),
+then click **Authorize** in Swagger UI and paste it.
 
 ## 🌐 Live Demo
 
@@ -347,7 +268,8 @@ The application is deployed and running at:
 - [ ] Background jobs (RabbitMQ)
 - [x] CI/CD (GitHub Actions)
 
-📄 License
+## 📄 License
+
 MIT
 
 ## 🧑‍💻 Author
